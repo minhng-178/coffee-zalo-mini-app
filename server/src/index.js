@@ -4,6 +4,7 @@ const cors = require("cors");
 const { v4: uuid } = require("uuid");
 const { computeOrderMac, computeCallbackMac } = require("./mac");
 const { createOrder, getOrder, setOrderStatus } = require("./orderStore");
+const { connectDb, getDb } = require("./db");
 
 const { ZALO_APP_ID, ZALO_PRIVATE_KEY, PORT = 8080, CORS_ORIGIN } = process.env;
 
@@ -18,6 +19,27 @@ const ZALO_CALLBACK_IPS = new Set(["118.102.2.29", "49.213.78.2"]);
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: CORS_ORIGIN ? CORS_ORIGIN.split(",") : true }));
+
+// Catalog data (seeded via `npm run seed`, see src/seed.js) — read-only,
+// served straight from MongoDB so the mini app doesn't bundle it.
+app.get("/categories", async (req, res) => {
+  const categories = await getDb().collection("categories").find({}, { projection: { _id: 0 } }).toArray();
+  res.json(categories);
+});
+
+app.get("/products", async (req, res) => {
+  const db = getDb();
+  const [products, variants] = await Promise.all([
+    db.collection("products").find({}, { projection: { _id: 0 } }).toArray(),
+    db.collection("variants").find({}, { projection: { _id: 0 } }).toArray(),
+  ]);
+  res.json(
+    products.map((product) => ({
+      ...product,
+      variants: variants.filter((variant) => product.variantId.includes(variant.id)),
+    }))
+  );
+});
 
 // 1. Mini app calls this right before createOrder() with the real cart.
 // Returns the orderId + mac the client must attach to the createOrder call.
@@ -77,6 +99,13 @@ app.post("/zalo/order-callback", (req, res) => {
   res.json({ returnCode: 1, returnMessage: "Success" });
 });
 
-app.listen(PORT, () => {
-  console.log(`Payment server listening on :${PORT}`);
-});
+connectDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Payment server listening on :${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to database:", err);
+    process.exit(1);
+  });

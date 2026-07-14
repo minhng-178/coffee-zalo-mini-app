@@ -8,14 +8,20 @@ Zalo's own servers call during checkout.
 
 ```
 cd server
-cp .env.example .env   # fill in ZALO_APP_ID and ZALO_PRIVATE_KEY from the
-                        # app's dashboard (Security Method / Private Key)
+cp .env.example .env   # fill in ZALO_APP_ID, ZALO_PRIVATE_KEY (from the
+                        # app's dashboard) and DATABASE_URL (a MongoDB
+                        # connection string)
 npm install
+npm run seed           # populate categories/products/variants collections
 npm run dev
 ```
 
 ## Endpoints
 
+- `GET /categories` — the product category list.
+- `GET /products` — the product catalog, each item with its matching
+  `variants` attached. Both are read from MongoDB and seeded via
+  `npm run seed` (`src/seed.js`, source data in `src/seedData.js`).
 - `POST /orders` — called by the mini app before `createOrder()`. Body:
   `{ item, amount, desc, extradata }`. Returns `{ orderId, mac }`.
 - `POST /zalo/order-callback` — deploy this and paste the public URL into
