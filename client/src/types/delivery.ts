@@ -5,3 +5,5 @@ export interface Store {
   lat: number;
   long: number;
 }
+
+export type FulfillmentType = "pickup" | "delivery";

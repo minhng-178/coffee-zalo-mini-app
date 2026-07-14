@@ -1,28 +1,47 @@
 import { ElasticTextarea } from "components/elastic-textarea";
 import { ListRenderer } from "components/list-renderer";
 import React, { FC, Suspense } from "react";
-import { Box, Icon, Input, Text } from "zmp-ui";
+import { Box, Icon, Radio, Text } from "zmp-ui";
+import { DeliveryAddressPicker } from "./delivery-address-picker";
 import { PersonPicker, RequestPersonPickerPhone } from "./person-picker";
 import { RequestStorePickerLocation, StorePicker } from "./store-picker";
 import { TimePicker } from "./time-picker";
 import { useRecoilState } from "recoil";
-import { orderNoteState } from "state";
+import { fulfillmentTypeState, orderNoteState } from "state";
 
 export const Delivery: FC = () => {
   const [note, setNote] = useRecoilState(orderNoteState);
+  const [fulfillmentType, setFulfillmentType] = useRecoilState(
+    fulfillmentTypeState,
+  );
 
   return (
     <Box className="space-y-3 px-4">
       <Text.Header>Hình thức nhận hàng</Text.Header>
+      <Radio.Group
+        className="grid grid-cols-2"
+        name="fulfillmentType"
+        options={[
+          { value: "pickup", label: "Tự đến lấy" },
+          { value: "delivery", label: "Giao hàng" },
+        ]}
+        value={fulfillmentType}
+        onChange={(value: string) =>
+          setFulfillmentType(value as "pickup" | "delivery")
+        }
+      />
       <ListRenderer
         items={[
           {
             left: <Icon icon="zi-location" className="my-auto" />,
-            right: (
-              <Suspense fallback={<RequestStorePickerLocation />}>
-                <StorePicker />
-              </Suspense>
-            ),
+            right:
+              fulfillmentType === "delivery" ? (
+                <DeliveryAddressPicker />
+              ) : (
+                <Suspense fallback={<RequestStorePickerLocation />}>
+                  <StorePicker />
+                </Suspense>
+              ),
           },
           {
             left: <Icon icon="zi-clock-1" className="my-auto" />,

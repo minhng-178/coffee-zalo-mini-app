@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "ZaUI Coffee",
+    "title": "HDUI Coffee",
     "textColor": "black",
     "leftButton": "none",
     "statusBar": "transparent",
@@ -13,7 +13,7 @@
   "listSyncJS": [],
   "listAsyncJS": [],
   "template": {
-    "name": "zaui-coffee",
+    "name": "hdui-coffee",
     "primaryColor": "#006af5",
     "prefixCurrencySymbol": false,
     "currencySymbol": "đ",

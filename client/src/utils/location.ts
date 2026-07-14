@@ -1,3 +1,63 @@
+import { getLocation } from "zmp-sdk";
+import { wait } from "./async";
+
+export async function fetchLocationOnce(): Promise<
+  { latitude: string; longitude: string } | false
+> {
+  const { latitude, longitude, token } = await getLocation({
+    fail: console.warn,
+  });
+  if (latitude && longitude) {
+    return { latitude, longitude };
+  }
+  if (token) {
+    console.warn(
+      "Sử dụng token này để truy xuất vị trí chính xác của người dùng",
+      token
+    );
+    console.warn(
+      "Chi tiết tham khảo: ",
+      "https://mini.zalo.me/blog/thong-bao-thay-doi-luong-truy-xuat-thong-tin-nguoi-dung-tren-zalo-mini-app"
+    );
+    console.warn("Giả lập vị trí mặc định: VNG Campus");
+    return {
+      latitude: "10.7287",
+      longitude: "106.7317",
+    };
+  }
+  return false;
+}
+
+// Nominatim's usage policy caps public requests at ~1/sec; this throttle
+// keeps reverse geocode calls (fired on map drag-end) under that ceiling.
+const NOMINATIM_MIN_INTERVAL_MS = 1100;
+let lastNominatimRequestAt = 0;
+
+export async function reverseGeocode(
+  lat: number,
+  long: number
+): Promise<string | null> {
+  const elapsed = Date.now() - lastNominatimRequestAt;
+  if (elapsed < NOMINATIM_MIN_INTERVAL_MS) {
+    await wait(NOMINATIM_MIN_INTERVAL_MS - elapsed);
+  }
+  lastNominatimRequestAt = Date.now();
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${long}`
+    );
+    if (!res.ok) {
+      return null;
+    }
+    const data = await res.json();
+    return data?.display_name ?? null;
+  } catch (error) {
+    console.warn("Reverse geocode lỗi", error);
+    return null;
+  }
+}
+
 export function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the earth in km
   const dLat = deg2rad(lat2 - lat1); // deg2rad below

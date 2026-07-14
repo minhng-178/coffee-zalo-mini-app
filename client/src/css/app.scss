@@ -93,6 +93,26 @@ body {
   }
 }
 
+.store-map-marker--selected {
+  filter: hue-rotate(140deg) saturate(2);
+}
+
+.store-map-user-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__dot {
+    display: block;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--zmp-primary-color, #007aff);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  }
+}
+
 .swiper-pagination.swiper-pagination-horizontal {
   display: flex;
   gap: 4px;

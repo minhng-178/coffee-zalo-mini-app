@@ -61,8 +61,10 @@ jobs:
           node-version: 18.x
           cache: "npm"
       - run: npm install
+        working-directory: client
       - run: npm install -g zmp-cli
       - run: npx zmp-developer-token deploy ${{ matrix.mini-app-id }}
+        working-directory: client
         env:
           NEW_ACCESS_TOKEN: ${{ secrets.ZALO_ACCESS_TOKEN }}
       - name: Report

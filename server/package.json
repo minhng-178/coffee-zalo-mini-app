@@ -1,0 +1,21 @@
+{
+  "name": "hdui-coffee-payment-server",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Backend for HDUI Coffee's Zalo Mini App CheckoutSDK (COD) integration",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
