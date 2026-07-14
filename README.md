@@ -1,4 +1,4 @@
-# ZaUI Coffee
+# HDUI Coffee
 
 <p style="display: flex; flex-wrap: wrap; gap: 4px">
   <img alt="react" src="https://img.shields.io/github/package-json/dependency-version/Zalo-MiniApp/zaui-coffee/react" />
@@ -21,19 +21,28 @@ Public template for building a coffee shop on Zalo Mini App. Main features:
 | :---------------------------------------------: | :------------------------------------------: |
 | <img src="./docs/preview.webp" alt="Home page"> | <img src="./docs/qr.webp" alt="Entry point"> |
 
+## Project structure
+
+This repo has two parts:
+
+- `client/` — the Zalo Mini App itself (Vite + React), see below for setup.
+- `server/` — the Express backend for CheckoutSDK (COD) payment integration, see `server/README.md`.
+
+Run `npm install` then `npm run dev` at the repo root to start both concurrently.
+
 ## Setup
 
 ### Using Zalo Mini App Extension
 
 1. Install [Visual Studio Code](https://code.visualstudio.com/download) and [Zalo Mini App Extension](https://mini.zalo.me/docs/dev-tools).
-1. Click on **Create Project** > Choose **ZaUI Coffee** template > Wait until the generated project is ready.
+1. Click on **Create Project** > Choose **HDUI Coffee** template > Wait until the generated project is ready.
 1. **Configure App ID** and **Install Dependencies**, then navigate to the **Run** panel > **Start** to develop your Mini App 🚀
 
 
 ### Using Zalo Mini App Studio
 
 1. [Install Zalo Mini App Studio](https://mini.zalo.me/docs/dev-tools)
-1. Click on New project > Enter your Mini App ID > Choose ZaUI Coffee template
+1. Click on New project > Enter your Mini App ID > Choose HDUI Coffee template
 1. Wait until the generated project is ready and click the Start button to run the mini app 🚀
 
 ### Using Zalo Mini App CLI
@@ -44,6 +53,7 @@ Public template for building a coffee shop on Zalo Mini App. Main features:
 1. Install dependencies
 
    ```bash
+   cd client
    npm install
    ```
 
@@ -106,7 +116,7 @@ Just change the `app.title` property in `app-config.json`:
 ```json
 {
   "app": {
-    "title": "ZaUI Coffee"
+    "title": "HDUI Coffee"
   }
 }
 ```
@@ -160,3 +170,4 @@ Copyright (c) Zalo Group. and its affiliates. All rights reserved.
 
 The examples provided by Zalo Group are for non-commercial testing and evaluation
 purposes only. Zalo Group reserves all rights not expressly granted.
+# coffee-zalo-mini-app
