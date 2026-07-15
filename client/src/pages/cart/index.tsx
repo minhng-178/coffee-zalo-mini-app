@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, Suspense } from "react";
 import { Divider } from "components/divider";
 import { Header, Page } from "zmp-ui";
 import { CartItems } from "./cart-items";
@@ -18,7 +18,11 @@ const CartPage: FC = () => {
       <Divider size={12} />
       <TermsAndPolicies />
       <Divider size={32} className="flex-1" />
-      {!keyboardVisible && <CartPreview />}
+      {!keyboardVisible && (
+        <Suspense fallback={null}>
+          <CartPreview />
+        </Suspense>
+      )}
     </Page>
   );
 };

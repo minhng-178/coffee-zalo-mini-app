@@ -126,14 +126,6 @@ export const resultState = selector<Product[]>({
   },
 });
 
-// Bounding box roughly covering inner Ho Chi Minh City districts.
-const HCM_BOUNDS = { latMin: 10.7, latMax: 10.85, longMin: 106.6, longMax: 106.8 };
-
-const randomCoordInHCM = () => ({
-  lat: HCM_BOUNDS.latMin + Math.random() * (HCM_BOUNDS.latMax - HCM_BOUNDS.latMin),
-  long: HCM_BOUNDS.longMin + Math.random() * (HCM_BOUNDS.longMax - HCM_BOUNDS.longMin),
-});
-
 export const storesState = atom<Store[]>({
   key: "stores",
   default: [
@@ -149,25 +141,29 @@ export const storesState = atom<Store[]>({
       id: 2,
       name: "HDUI Coffee - Chi nhánh 2",
       address: "Thành phố Hồ Chí Minh, Việt Nam",
-      ...randomCoordInHCM(),
+      lat: 10.762622,
+      long: 106.660172,
     },
     {
       id: 3,
       name: "HDUI Coffee - Chi nhánh 3",
       address: "Thành phố Hồ Chí Minh, Việt Nam",
-      ...randomCoordInHCM(),
+      lat: 10.823099,
+      long: 106.629662,
     },
     {
       id: 4,
       name: "HDUI Coffee - Chi nhánh 4",
       address: "Thành phố Hồ Chí Minh, Việt Nam",
-      ...randomCoordInHCM(),
+      lat: 10.732599,
+      long: 106.719971,
     },
     {
       id: 5,
       name: "HDUI Coffee - Chi nhánh 5",
       address: "Thành phố Hồ Chí Minh, Việt Nam",
-      ...randomCoordInHCM(),
+      lat: 10.796654,
+      long: 106.700035,
     },
   ],
 });
@@ -200,7 +196,7 @@ export const nearbyStoresState = selector({
 
       return nearbyStores;
     }
-    return [];
+    return stores;
   },
 });
 

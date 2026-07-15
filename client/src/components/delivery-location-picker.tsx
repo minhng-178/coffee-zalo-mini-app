@@ -21,29 +21,37 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+const DEFAULT_CENTER: [number, number] = [10.7970481, 106.647743];
+
 export interface DeliveryLocationPickerProps {
   liveLocation?: { latitude: string; longitude: string } | null;
+  /** True while a GPS fix has been requested but hasn't arrived yet. */
+  locating?: boolean;
+  /** Called when the user taps the locate button and there's no fix yet. */
+  onRequestLocation: () => void;
   onCenterChange: (center: { lat: number; long: number }) => void;
+  /** Bumping `key` flies the map to {lat, long}, e.g. after picking a search suggestion. */
+  flyTo?: { lat: number; long: number; key: number } | null;
   height?: number | string;
 }
 
 export const DeliveryLocationPicker: FC<DeliveryLocationPickerProps> = ({
   liveLocation,
+  locating = false,
+  onRequestLocation,
   onCenterChange,
+  flyTo,
   height = 220,
 }) => {
   const mapRef = useRef<L.Map | null>(null);
 
   return (
-    <div className="relative rounded-lg overflow-hidden" style={{ height }}>
+    <div className="relative overflow-hidden" style={{ height }}>
       <MapContainer
-        center={
-          liveLocation
-            ? [Number(liveLocation.latitude), Number(liveLocation.longitude)]
-            : [10.7970481, 106.647743]
-        }
+        center={DEFAULT_CENTER}
         zoom={16}
         scrollWheelZoom={false}
+        zoomControl={false}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
@@ -52,6 +60,8 @@ export const DeliveryLocationPicker: FC<DeliveryLocationPickerProps> = ({
         />
         <MapController mapRef={mapRef} />
         <CenterTracker onMoveEnd={onCenterChange} />
+        <FlyToTarget mapRef={mapRef} target={flyTo} />
+        <FlyToFirstFix mapRef={mapRef} liveLocation={liveLocation} />
         {liveLocation && (
           <Marker
             position={[
@@ -76,21 +86,49 @@ export const DeliveryLocationPicker: FC<DeliveryLocationPickerProps> = ({
         <img src={markerIcon} className="w-[25px] h-[41px]" alt="" />
       </div>
 
-      {liveLocation && (
+      {/* Floating controls, Grab/Shopee-style: custom round buttons instead
+          of Leaflet's default top-left zoom control (disabled above via
+          zoomControl={false}). Pinch-to-zoom stays on (touchZoom defaults
+          to true). */}
+      <div className="absolute right-2 bottom-2 z-[1000] flex flex-col items-center gap-2">
         <button
           type="button"
-          className="absolute right-2 bottom-2 z-[1000] bg-white rounded-full shadow p-2"
-          onClick={() => {
-            const { latitude, longitude } = liveLocation;
-            mapRef.current?.flyTo(
-              [Number(latitude), Number(longitude)],
-              mapRef.current.getZoom()
-            );
-          }}
+          className="bg-white rounded-full shadow p-2"
+          onClick={() => mapRef.current?.zoomIn()}
+          aria-label="Phóng to"
         >
-          <Icon icon="zi-location" />
+          <Icon icon="zi-plus-circle" />
         </button>
-      )}
+        <button
+          type="button"
+          className="bg-white rounded-full shadow p-2"
+          onClick={() => mapRef.current?.zoomOut()}
+          aria-label="Thu nhỏ"
+        >
+          <Icon icon="zi-minus-circle" />
+        </button>
+        <button
+          type="button"
+          className="bg-white rounded-full shadow p-2"
+          onClick={() => {
+            if (liveLocation) {
+              mapRef.current?.flyTo(
+                [Number(liveLocation.latitude), Number(liveLocation.longitude)],
+                mapRef.current.getZoom()
+              );
+            } else {
+              onRequestLocation();
+            }
+          }}
+          aria-label="Vị trí của tôi"
+        >
+          {locating ? (
+            <span className="block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Icon icon="zi-location" />
+          )}
+        </button>
+      </div>
     </div>
   );
 };
@@ -112,5 +150,45 @@ const CenterTracker: FC<{
     const center = map.getCenter();
     onMoveEnd({ lat: center.lat, long: center.lng });
   });
+  return null;
+};
+
+const FlyToTarget: FC<{
+  mapRef: React.MutableRefObject<L.Map | null>;
+  target?: { lat: number; long: number; key: number } | null;
+}> = ({ mapRef, target }) => {
+  useEffect(() => {
+    if (target) {
+      mapRef.current?.flyTo([target.lat, target.long], 16);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target?.key]);
+  return null;
+};
+
+// Flies to the user's location the first time a fix arrives after being
+// requested, without re-centering on every subsequent 5s poll tick (which
+// would fight the user's own map exploration).
+const FlyToFirstFix: FC<{
+  mapRef: React.MutableRefObject<L.Map | null>;
+  liveLocation?: { latitude: string; longitude: string } | null;
+}> = ({ mapRef, liveLocation }) => {
+  const hasFlownRef = useRef(false);
+
+  useEffect(() => {
+    if (!liveLocation) {
+      hasFlownRef.current = false;
+      return;
+    }
+    if (hasFlownRef.current) {
+      return;
+    }
+    hasFlownRef.current = true;
+    mapRef.current?.flyTo(
+      [Number(liveLocation.latitude), Number(liveLocation.longitude)],
+      16
+    );
+  }, [liveLocation, mapRef]);
+
   return null;
 };
