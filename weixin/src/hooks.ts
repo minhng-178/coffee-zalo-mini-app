@@ -21,9 +21,16 @@ export function useVirtualKeyboardVisible() {
     const handleKeyboardHeightChange = (res: { height: number }) => {
       setVisible(res.height > 0);
     };
-    Taro.onKeyboardHeightChange(handleKeyboardHeightChange);
+    // Taro types this as returning void, but on platforms/base libraries
+    // that don't implement it, the runtime stub returns a rejected promise
+    // instead — catch it so it doesn't surface as an uncaught rejection.
+    Promise.resolve(
+      Taro.onKeyboardHeightChange(handleKeyboardHeightChange)
+    ).catch(() => {});
     return () => {
-      Taro.offKeyboardHeightChange(handleKeyboardHeightChange);
+      Promise.resolve(
+        Taro.offKeyboardHeightChange(handleKeyboardHeightChange)
+      ).catch(() => {});
     };
   }, []);
 

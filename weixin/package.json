@@ -40,7 +40,9 @@
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@babel/preset-react": "^7.29.7",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.6.2",
     "@tarojs/cli": "4.2.0",
+    "@tarojs/plugin-platform-h5": "^4.2.0",
     "@tarojs/webpack5-runner": "4.2.0",
     "@types/lodash": "^4.14.191",
     "@types/react": "^18.0.28",
@@ -50,6 +52,7 @@
     "babel-preset-taro": "4.2.0",
     "dotenv": "^16.4.5",
     "postcss": "^8.4.21",
+    "react-refresh": "^0.18.0",
     "sass": "^1.58.3",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.1.0",

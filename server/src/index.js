@@ -224,8 +224,18 @@ app.post("/wechat/payment-callback", async (req, res) => {
 
 connectDb()
   .then(() => {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Payment server listening on :${PORT}`);
+    });
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(
+          `Port ${PORT} is already in use. Another instance of this server is probably still running — ` +
+            `find it with \`lsof -nP -iTCP:${PORT} -sTCP:LISTEN\` and stop it, or set PORT to a free port in .env.`
+        );
+        process.exit(1);
+      }
+      throw err;
     });
   })
   .catch((err) => {

@@ -8,8 +8,8 @@
   "scripts": {
     "client": "npm start --prefix client",
     "server": "npm run dev --prefix server",
-    "weixin": "npm run dev:weapp --prefix weixin",
-    "dev": "concurrently -n CLIENT,SERVER -c blue,green \"npm:client\" \"npm:server\"",
+    "weixin": "npm run dev:h5 --prefix weixin",
+    "dev": "concurrently -n CLIENT,SERVER,WEIXIN -c blue,green,red \"npm:client\" \"npm:server\" \"npm:weixin\"",
     "deploy": "npm run deploy --prefix client"
   },
   "devDependencies": {
