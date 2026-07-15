@@ -23,12 +23,13 @@ Public template for building a coffee shop on Zalo Mini App. Main features:
 
 ## Project structure
 
-This repo has two parts:
+This repo has three parts:
 
 - `client/` — the Zalo Mini App itself (Vite + React), see below for setup.
-- `server/` — the Express backend for CheckoutSDK (COD) payment integration, see `server/README.md`.
+- `weixin/` — the WeChat Mini Program port of the same app (Taro + React), see `weixin/README.md` (if present) or the section below.
+- `server/` — the shared Express backend, serving both the Zalo CheckoutSDK (COD) flow and WeChat Pay, see `server/README.md`.
 
-Run `npm install` then `npm run dev` at the repo root to start both concurrently.
+Run `npm install` then `npm run dev` at the repo root to start the Zalo client + server concurrently. Run `npm run weixin` to build/watch the WeChat Mini Program separately (open `weixin/dist` in WeChat DevTools).
 
 ## Setup
 
@@ -64,6 +65,43 @@ Run `npm install` then `npm run dev` at the repo root to start both concurrently
    ```
 
 1. Open `localhost:3000` on your browser and start coding 🔥
+
+### WeChat Mini Program (weixin/)
+
+1. [Install Node.js](https://nodejs.org/en/download/) and [WeChat DevTools](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html).
+1. Install dependencies and start the server (shared with the Zalo app):
+
+   ```bash
+   cd server
+   npm install
+   cp .env.example .env   # fill in DATABASE_URL at minimum; WECHAT_* vars can
+                          # stay blank until you have a real WeChat Mini
+                          # Program/merchant account — see server/README.md
+   npm run seed
+   npm run dev
+   ```
+
+1. Build/watch the WeChat client:
+
+   ```bash
+   cd weixin
+   npm install
+   cp .env.example .env   # API_BASE_URL, defaults to http://localhost:8080
+   npm run dev:weapp
+   ```
+
+1. Open WeChat DevTools > Import Project > point it at `weixin/` (its `dist/`
+   output, per `project.config.json`'s `miniprogramRoot`). The project ships
+   with a placeholder `appid` ("touristappid") so it runs in the simulator
+   without a registered Mini Program yet — swap in your real AppID in
+   `weixin/project.config.json` once you have one.
+
+Notes on what differs from the Zalo app: WeChat Pay, phone-number retrieval,
+and the map/location pickers are implemented against WeChat's native APIs
+(not Zalo's `zmp-sdk`) — see `server/README.md`'s WeChat section for the
+payment/env-var setup, and `weixin/src/pages/cart/person-picker.tsx`'s TODO
+comment for the one still-stubbed piece (phone-number decryption, pending a
+server endpoint).
 
 ## Deployment
 

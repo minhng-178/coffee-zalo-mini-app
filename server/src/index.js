@@ -5,6 +5,14 @@ const { v4: uuid } = require("uuid");
 const { computeOrderMac, computeCallbackMac } = require("./mac");
 const { createOrder, getOrder, setOrderStatus } = require("./orderStore");
 const { connectDb, getDb } = require("./db");
+const {
+  getWechatConfig,
+  code2Session,
+  buildJsapiPayParams,
+  createPrepayOrder,
+  verifyAndDecryptNotify,
+} = require("./wechat");
+const wechatSessionStore = require("./wechatSessionStore");
 
 const { ZALO_APP_ID, ZALO_PRIVATE_KEY, PORT = 8080, CORS_ORIGIN } = process.env;
 
@@ -97,6 +105,121 @@ app.post("/zalo/order-callback", (req, res) => {
 
   setOrderStatus(orderId, "confirmed");
   res.json({ returnCode: 1, returnMessage: "Success" });
+});
+
+// --- WeChat Mini Program (weixin/) routes — additive, parallel to the Zalo
+// flow above. WeChat env vars are optional at boot (read lazily in
+// src/wechat.js); if they're unset these respond 501 instead of crashing.
+function isWechatNotConfigured(err) {
+  return typeof err?.message === "string" && err.message.startsWith("WeChat not configured");
+}
+
+// wx.login() code -> openid. session_key is cached server-side only, never
+// returned to the client.
+app.post("/wechat/login", async (req, res) => {
+  const { code } = req.body || {};
+  if (!code) {
+    return res.status(400).json({ error: "Missing code" });
+  }
+
+  try {
+    const session = await code2Session(code);
+    wechatSessionStore.setSession(session.openid, session.session_key);
+    res.json({ openId: session.openid });
+  } catch (err) {
+    if (isWechatNotConfigured(err)) {
+      return res.status(501).json({ error: "WeChat login not configured" });
+    }
+    console.error("wechat/login error:", err);
+    res.status(500).json({ error: "Failed to log in with WeChat" });
+  }
+});
+
+// Mirrors POST /orders above but for WeChat Pay JSAPI: exchanges the login
+// code for an openid, creates a prepay order, and returns the client-side
+// invocation signature Taro.requestPayment()/wx.requestPayment() needs.
+app.post("/wechat/orders", async (req, res) => {
+  const { code, item, amount, desc, extradata } = req.body || {};
+  if (!code || !Array.isArray(item) || typeof amount !== "number" || !desc) {
+    return res.status(400).json({ error: "Missing code, item, amount, or desc" });
+  }
+
+  try {
+    const session = await code2Session(code);
+    wechatSessionStore.setSession(session.openid, session.session_key);
+
+    const orderId = uuid();
+    const fullExtradata = { ...extradata, orderId };
+    createOrder(orderId, { desc, item, amount, extradata: fullExtradata, platform: "wechat", openid: session.openid });
+
+    const config = getWechatConfig();
+
+    // NOTE (currency-unit placeholder): `amount` arrives in the same whole
+    // currency units the shop's prices are modeled in today (VND-like, same
+    // as Zalo's /orders — see client/src/utils/product.ts's payCOD and
+    // weixin/src/utils/product.ts's payWeChat, both compute amount as
+    // `quantity * calcFinalPrice(...)` with no unit conversion). WeChat Pay's
+    // `amount.total` wants the smallest currency unit (fen for CNY). Until
+    // the catalog is actually priced in CNY, we just multiply by 100 here —
+    // revisit this conversion before taking real payments.
+    const totalFen = Math.round(amount * 100);
+
+    const prepayId = await createPrepayOrder({
+      description: desc,
+      outTradeNo: orderId,
+      totalFen,
+      openid: session.openid,
+      notifyUrl: config.notifyUrl,
+      mchId: config.mchId,
+      appId: config.appId,
+      mchPrivateKeyPem: config.mchPrivateKeyPem,
+      mchCertSerialNo: config.mchCertSerialNo,
+    });
+
+    const payParams = buildJsapiPayParams({
+      prepayId,
+      appId: config.appId,
+      mchPrivateKeyPem: config.mchPrivateKeyPem,
+    });
+
+    res.json({ orderId, ...payParams });
+  } catch (err) {
+    if (isWechatNotConfigured(err)) {
+      return res.status(501).json({ error: "WeChat Pay not configured" });
+    }
+    console.error("wechat/orders error:", err);
+    res.status(500).json({ error: "Failed to create WeChat order" });
+  }
+});
+
+// WeChat Pay's async merchant notify URL (register in the merchant platform
+// as WECHAT_PAY_NOTIFY_URL). Unauthenticated transport — the APIv3 payload
+// itself is what's verified, via AES-256-GCM decryption with the API v3 key.
+app.post("/wechat/payment-callback", async (req, res) => {
+  try {
+    const config = getWechatConfig();
+    const { resource } = req.body || {};
+    if (!resource) {
+      throw new Error("Missing resource in notification");
+    }
+
+    const decrypted = verifyAndDecryptNotify({
+      ciphertext: resource.ciphertext,
+      associatedData: resource.associated_data,
+      nonce: resource.nonce,
+      apiv3Key: config.apiv3Key,
+    });
+
+    const { out_trade_no: orderId, trade_state } = decrypted;
+    if (orderId && trade_state === "SUCCESS") {
+      setOrderStatus(orderId, "confirmed");
+    }
+
+    res.json({ code: "SUCCESS", message: "成功" });
+  } catch (err) {
+    console.error("wechat/payment-callback error:", err);
+    res.status(500).json({ code: "FAIL", message: err.message || "Failed to process notification" });
+  }
 });
 
 connectDb()
