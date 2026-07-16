@@ -1,5 +1,5 @@
 import React, { FC } from "react";
-import { Swiper, SwiperItem } from "@tarojs/components";
+import { Swiper, SwiperItem, Image } from "@tarojs/components";
 import { getDummyImage } from "utils/product";
 import { Box } from "components/ui";
 
@@ -14,9 +14,10 @@ export const Banner: FC = () => {
           .map((i) => getDummyImage(`banner-${i}.webp`))
           .map((banner, i) => (
             <SwiperItem key={i} className="px-4">
-              <Box
-                className="w-full h-full rounded-lg bg-cover bg-center bg-skeleton"
-                style={{ backgroundImage: `url(${banner})` }}
+              <Image
+                mode="aspectFill"
+                src={banner}
+                className="w-full h-full rounded-lg bg-skeleton"
               />
             </SwiperItem>
           ))}

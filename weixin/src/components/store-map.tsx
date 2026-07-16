@@ -84,8 +84,17 @@ export const StoreMap: FC<StoreMapProps> = ({
         longitude: Number(userLocation.longitude),
       });
     }
+    // Taro's H5 platform has no native map context — createMapContext is a
+    // "temporarily not supported" stub there that returns a rejected promise
+    // instead of a real context, so only weapp gets a usable `includePoints`.
+    // Guard both shapes: call it when available, and swallow the H5 stub's
+    // rejection so it doesn't surface as an unhandled promise rejection.
     const ctx = Taro.createMapContext(MAP_ID);
-    ctx.includePoints({ points, padding: [24, 24, 24, 24] });
+    if (typeof ctx?.includePoints === "function") {
+      ctx.includePoints({ points, padding: [24, 24, 24, 24] });
+    } else if (typeof (ctx as unknown as Promise<unknown>)?.catch === "function") {
+      (ctx as unknown as Promise<unknown>).catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stores, userLocation, selectedStoreId]);
 

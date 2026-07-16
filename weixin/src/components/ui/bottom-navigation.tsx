@@ -53,7 +53,16 @@ const BottomNavigationBase: FC<BottomNavigationProps> = ({
   className = "",
   children,
 }) => {
-  const items = Children.toArray(children).filter(isValidElement) as ReactElement<BottomNavigationItemProps>[];
+  // Children.toArray()/Children.map() rewrite each child's `.key` (prefixing
+  // it, e.g. "/notification" -> ".$/notification") for reconciliation
+  // purposes, which breaks the `key === activeKey` / ROUTE_MAP[key] lookups
+  // below. Children.forEach leaves the original author-supplied key intact.
+  const items: ReactElement<BottomNavigationItemProps>[] = [];
+  Children.forEach(children, (child) => {
+    if (isValidElement(child)) {
+      items.push(child as ReactElement<BottomNavigationItemProps>);
+    }
+  });
 
   return (
     <View id={id} className={`flex border-t border-divider bg-white ${className}`}>

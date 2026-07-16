@@ -1,5 +1,5 @@
 const path = require("path");
-const { WeappTailwindcss } = require("weapp-tailwindcss/webpack");
+const { UnifiedWebpackPluginV5: WeappTailwindcss } = require("weapp-tailwindcss/webpack");
 
 require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
 
@@ -86,6 +86,12 @@ const config = {
       chain.plugin("weapp-tailwindcss").use(WeappTailwindcss, [
         {
           appType: "taro",
+          // H5 runs in a real browser, which already understands Tailwind's
+          // own escaped selectors (e.g. `.-top-\[2px\]`) — skip the
+          // className/WXML rewriting this plugin does for WXSS safety, since
+          // it mangles literal class strings (e.g. `-top-[2px]` ->
+          // `-top-_b2px_B`) without a matching CSS rule, breaking layout.
+          disabled: true,
         },
       ]);
     },

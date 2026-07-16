@@ -4,7 +4,7 @@ import { ProductPicker } from "components/product/picker";
 import { Section } from "components/section";
 import { ProductSlideSkeleton } from "components/skeletons";
 import React, { Suspense, FC } from "react";
-import { View } from "@tarojs/components";
+import { View, Image } from "@tarojs/components";
 import { useRecoilValue } from "recoil";
 import { recommendProductsState } from "state";
 import { Swiper, SwiperItem } from "@tarojs/components";
@@ -23,10 +23,12 @@ export const RecommendContent: FC = () => {
             <ProductPicker product={product}>
               {({ open }) => (
                 <View onClick={open} className="space-y-3 px-2">
-                  <Box
-                    className="relative aspect-video rounded-lg bg-cover bg-center bg-skeleton"
-                    style={{ backgroundImage: `url(${product.image})` }}
-                  >
+                  <Box className="relative aspect-video rounded-lg overflow-hidden bg-skeleton">
+                    <Image
+                      mode="aspectFill"
+                      src={product.image}
+                      className="absolute inset-0 w-full h-full rounded-lg"
+                    />
                     {product.sale && (
                       <Text
                         size="xxxxSmall"

@@ -12,7 +12,7 @@ export const Page: FC<PropsWithChildren<PageProps>> = ({
   style,
   children,
 }) => (
-  <View className={`min-h-screen flex flex-col bg-white ${className}`} style={style}>
+  <View className={`h-screen flex flex-col bg-white ${className}`} style={style}>
     {children}
   </View>
 );
